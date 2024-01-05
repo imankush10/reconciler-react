@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      * {
+        color: white;
+        background-color: #222;
+        font-size: 1.2rem;
+        margin: 0.5rem;
+      }
+      #todos > * {
+        margin: 0.7rem;
+      }
+      #save {
+        background-color: white;
+        color: black;
+        display: none;
+        border-radius: 12px;
+        padding: 6px 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="text" id="title" placeholder="Todo title" /> <br /><br />
+    <input type="text" id="description" placeholder="Todo description" />
+    <br /><br />
+    <button onclick="addTodo()">Add todo</button>
+    <button onclick="removeTodo()">Remove todo</button>
+    <button onclick="editTodo()">Edit todo</button>
+    <br />
+    <br />
+    <div id="todos"></div>
+    <div>
+      <button id="save" onclick="editTodo()">Save</button>
+    </div>
+    <script>
+      let globalId = 1;
+      let todoState = [];
+      let oldTodoState = [];
+      let editing = false;
+      const todos = document.getElementById("todos");
+      const save = document.getElementById("save");
+      function addTodoToDom(added) {
+        added.forEach((add) => {
+          const container = document.createElement("div");
+          const titleTodo = document.createElement("div");
+          const descTodo = document.createElement("div");
+
+          titleTodo.textContent = add.title;
+          descTodo.textContent = add.description;
+          container.setAttribute("id", add.id);
+          container.appendChild(titleTodo);
+          container.appendChild(descTodo);
+          todos.appendChild(container);
+        });
+      }
+      function removeTodoFromDom(deleted) {
+        deleted.forEach((del) => {
+          todos.removeChild(document.getElementById(del.id));
+        });
+      }
+      function updateTodoInDom(oldTodo, newTodo) {
+        newTodo.forEach(neww=>{
+            const elm = document.getElementById(neww.id);
+            elm.children[0].textContent = neww.title;
+            elm.children[1].textContent = neww.description;
+        })
+      }
+      function updateState(newTodos) {
+        const added = [];
+        const deleted = [];
+        const updated = [];
+
+        if (newTodos.length > oldTodoState.length) {
+          if (oldTodoState.length == 0) added.push(...newTodos);
+          else added.push(...newTodos.slice(oldTodoState.length));
+        } else if (oldTodoState.length > newTodos.length) {
+          if (newTodos.length == 0) deleted.push(...oldTodoState);
+          else deleted.push(...oldTodoState.slice(newTodos.length));
+        } else {
+          oldTodoState.forEach((ol,idx)=>{
+            if(newTodos[idx].title!=ol.title || newTodos[idx].description!=ol.description) updated.push(newTodos[idx]); 
+          })
+        }
+        
+        addTodoToDom(added);
+        removeTodoFromDom(deleted);
+        updateTodoInDom(oldTodoState,updated);
+        oldTodoState = [...newTodos];
+      }
+      function addTodo() {
+        const title = document.getElementById("title").value;
+        const description = document.getElementById("description").value;
+
+        todoState.push({
+          title: title,
+          description: description,
+          id: globalId++,
+        });
+        updateState(todoState);
+      }
+      function removeTodo() {
+        todoState.pop();
+        updateState(todoState);
+      }
+      function editTodo() {
+        if (editing) {
+          todoState.forEach((to) => {
+            document.getElementById(to.id).style.display = "block";
+          });
+
+          save.style.display = "none";
+          const inputs = document.querySelectorAll("#todos> .container");
+          const editedTodos = [];
+
+          inputs.forEach((inp) => {
+            todos.removeChild(document.querySelector(`.c${inp.id}`));
+
+            const newTitleVal = inp.children[0].value;
+            const newDescVal = inp.children[1].value;
+
+            editedTodos.push({
+              title: newTitleVal,
+              description: newDescVal,
+              id: Number(inp.id),
+            });
+          });
+          todoState = [...editedTodos];
+          updateState(todoState);
+        } else {
+          save.style.display = "block";
+
+          todoState.forEach((to) => {
+            document.getElementById(to.id).style.display = "none";
+            const container = document.createElement("div");
+            const titleIn = document.createElement("input");
+            const descIn = document.createElement("input");
+
+            titleIn.value = to.title;
+            descIn.value = to.description;
+
+            container.appendChild(titleIn);
+            container.appendChild(descIn);
+            container.setAttribute("id", to.id);
+            container.setAttribute("class", `c${to.id}`);
+            container.classList.add("container");
+            container.style.display = "flex";
+            container.style.flexDirection = "column";
+            container.style.width = "30rem";
+            todos.appendChild(container);
+          });
+        }
+        editing = !editing;
+      }
+    </script>
+  </body>
+</html>
